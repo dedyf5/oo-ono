@@ -65,7 +65,7 @@ $(document).ready(function(){
 		$.ajax({
 			url: API_AVAILABILITY,
 			type: 'POST',
-			data: {OO_API_CLIENT_KEY: API_KEY, url: list, q: qList},
+			data: {OO_APP_API_CLIENT_KEY: API_KEY, url: list, q: qList},
 			success: function(result){
 				try{
 					$('.'+peopleClass).each(function(){
