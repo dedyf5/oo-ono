@@ -13,35 +13,41 @@ $(document).ready(function () {
 	var idList = [];
 	$('a').each(function () {
 		var href = $(this).attr('href');
-		if (href !== undefined) {
-			var name = $(this).html();
-			if (href.startsWith(PEOPLE_URL_PREFIX) && !name.includes('<')) {
-				var nameExp = name.split(', ');
-				var nameFormat = name;
-				if (nameExp.length == 2) {
-					nameFormat = nameExp[1] + ' ' + nameExp[0];
-				}
-				$(this).html(nameFormat + ' ' + LOADING_IMG);
-				$(this).addClass('oo ' + peopleClass);
-				const nameCopy = '<span style="cursor: pointer" onclick="copyTextToClipboard(\'' + nameFormat + '\');" title="Copy Name">copy</span>';
-				var tools = '[' + nameCopy + ']';
-				var str = href.replace(PEOPLE_URL_PREFIX, '');
-				var exp = str.split('/');
-				if (exp.length > 1) {
-					$(this).attr('data-id', exp[0]);
-					const malIDTag = 'mal:' + exp[0];
-					const malIDCopy = '<span style="cursor: pointer" onclick="copyTextToClipboard(\'' + malIDTag + '\');" title="Copy ID">copy</span>';
-					tools += '<div class="oo_mal_id">[' + malIDTag + '][' + malIDCopy + ']</div>';
-				}
-				$(this).after(tools);
 
-				if (!list.includes(href)) {
-					list.push(href);
-					qList.push(name.replace(',', ''));
-					if (exp.length > 1) {
-						idList.push(exp[0]);
-					}
-				}
+		if (href === undefined) {
+			return;
+		}
+
+		var name = $(this).html();
+
+		if (!href.startsWith(PEOPLE_URL_PREFIX) || name.includes('<')) {
+			return;
+		}
+
+		var nameExp = name.split(', ');
+		var nameFormat = name;
+		if (nameExp.length == 2) {
+			nameFormat = nameExp[1] + ' ' + nameExp[0];
+		}
+		$(this).html(nameFormat + ' ' + LOADING_IMG);
+		$(this).addClass('oo ' + peopleClass);
+		const nameCopy = '<span style="cursor: pointer" onclick="copyTextToClipboard(\'' + nameFormat + '\');" title="Copy Name">copy</span>';
+		var tools = '[' + nameCopy + ']';
+		var str = href.replace(PEOPLE_URL_PREFIX, '');
+		var exp = str.split('/');
+		if (exp.length > 1) {
+			$(this).attr('data-id', exp[0]);
+			const malIDTag = 'mal:' + exp[0];
+			const malIDCopy = '<span style="cursor: pointer" onclick="copyTextToClipboard(\'' + malIDTag + '\');" title="Copy ID">copy</span>';
+			tools += '<div class="oo_mal_id">[' + malIDTag + '][' + malIDCopy + ']</div>';
+		}
+		$(this).after(tools);
+
+		if (!list.includes(href)) {
+			list.push(href);
+			qList.push(name.replace(',', ''));
+			if (exp.length > 1) {
+				idList.push(exp[0]);
 			}
 		}
 	});
@@ -54,7 +60,7 @@ $(document).ready(function () {
 			nameFormat = format;
 			$(this).html(format);
 		}
-		const nameCopy = '<span style="cursor: pointer" onclick="copyTextToClipboard(\'' + nameFormat + '\');" title="Copy Nama">cp</span>';
+		const nameCopy = '<span style="cursor: pointer" onclick="copyTextToClipboard(\'' + nameFormat + '\');" title="Copy Name">cp</span>';
 		if ($(this).hasClass('h3_character_name')) {
 			$(this).parent().after('[' + nameCopy + ']');
 		} else {
@@ -74,13 +80,15 @@ $(document).ready(function () {
 						var name = $(this).html();
 						name = name.replace(' ' + LOADING_IMG, '');
 						$(this).html(name);
-						if (data != null) {
-							$(this).attr('title', 'Total = ' + data['total']);
-							if (data['total'] > 0) {
-								$(this).css('color', 'green');
-							} else {
-								$(this).css('color', 'red');
-							}
+
+						if (data == null) {
+							$(this).css('color', 'red');
+							return;
+						}
+
+						$(this).attr('title', 'Total = ' + data['total']);
+						if (data['total'] > 0) {
+							$(this).css('color', 'green');
 						} else {
 							$(this).css('color', 'red');
 						}
@@ -95,30 +103,29 @@ $(document).ready(function () {
 	}
 
 	function map_val(data = null, key = null) {
-		var result = data;
-		if ((data != null) && (key != null)) {
-			if (typeof key === 'object') {
-				var i;
-				for (i = 0; i < key.length; i++) {
-					var v = key[i];
-					if (result.hasOwnProperty(v)) {
-						var tmp = result[v];
-						result = tmp;
-					} else {
-						result = null;
-						break;
-					}
-				}
-			} else {
-				if (data.hasOwnProperty(key)) {
-					result = data[key];
-				} else {
-					result = null;
-				}
-			}
+		if (data == null) {
+			return null;
+		}
+		if (key == null) {
+			return data;
 		}
 
-		return result;
+		if (typeof key === 'object') {
+			var current = data;
+			for (var i = 0; i < key.length; i++) {
+				var v = key[i];
+				if (current == null || typeof current !== 'object' || !current.hasOwnProperty(v)) {
+					return null;
+				}
+				current = current[v];
+			}
+			return current;
+		} else {
+			if (!data.hasOwnProperty(key)) {
+				return null;
+			}
+			return data[key];
+		}
 	}
 });
 

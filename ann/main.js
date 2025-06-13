@@ -11,30 +11,36 @@ jQuery(document).ready(function () {
 	var idList = [];
 	jQuery('a').each(function () {
 		var href = jQuery(this).attr('href');
-		if (href !== undefined) {
-			var name = jQuery(this).html();
-			if (href.startsWith(PEOPLE_URL_PREFIX) && !name.includes('<')) {
-				jQuery(this).html(name + ' ' + LOADING_IMG);
-				jQuery(this).addClass('oo ' + peopleClass);
-				var id = href.replace(PEOPLE_URL_PREFIX, '');
 
-				const nameCopy = '<span style="cursor: pointer" onclick="copyTextToClipboard(\'' + name + '\');" title="Copy Name">copy name</span>';
-				var tools = '<span style="background-color: yellow;">([' + nameCopy + ']';
-
-				if (!list.includes(href) && (id != '')) {
-					jQuery(this).attr('data-id', id);
-					list.push(href);
-					qList.push(romaji(name));
-					idList.push(id);
-
-					const annIDTag = 'ann:' + id;
-					const annIDCopy = '<span style="cursor: pointer" onclick="copyTextToClipboard(\'' + annIDTag + '\');" title="Copy ID">copy</span>';
-					tools += ' - <span class="oo_ann_id">' + annIDTag + '[' + annIDCopy + ']</span>';
-				}
-				tools += ')</span>';
-				jQuery(this).after(tools);
-			}
+		if (href === undefined) {
+			return;
 		}
+
+		var name = jQuery(this).html();
+
+		if (!href.startsWith(PEOPLE_URL_PREFIX) || name.includes('<')) {
+			return;
+		}
+
+		jQuery(this).html(name + ' ' + LOADING_IMG);
+		jQuery(this).addClass('oo ' + peopleClass);
+		var id = href.replace(PEOPLE_URL_PREFIX, '');
+
+		const nameCopy = '<span style="cursor: pointer" onclick="copyTextToClipboard(\'' + name.replace(/'/g, "\\'") + '\');" title="Copy Name">copy name</span>';
+		var tools = '<span style="background-color: yellow;">([' + nameCopy + ']';
+
+		if (!list.includes(href) && (id != '')) {
+			jQuery(this).attr('data-id', id);
+			list.push(href);
+			qList.push(romaji(name));
+			idList.push(id);
+
+			const annIDTag = 'ann:' + id;
+			const annIDCopy = '<span style="cursor: pointer" onclick="copyTextToClipboard(\'' + annIDTag + '\');" title="Copy ID">copy</span>';
+			tools += ' - <span class="oo_ann_id">' + annIDTag + '[' + annIDCopy + ']</span>';
+		}
+		tools += ')</span>';
+		jQuery(this).after(tools);
 	});
 	if (list.length > 0) {
 		var ajax = {};
@@ -102,13 +108,15 @@ jQuery(document).ready(function () {
 					var name = jQuery(this).html();
 					name = name.replace(' ' + LOADING_IMG, '');
 					jQuery(this).html(name);
-					if (data != null) {
-						jQuery(this).attr('title', 'Total = ' + data['total']);
-						if (data['total'] > 0) {
-							jQuery(this).attr('style', 'color: blue !important;');
-						} else {
-							jQuery(this).attr('style', 'color: red !important;');
-						}
+
+					if (data == null) {
+						jQuery(this).attr('style', 'color: red !important;');
+						return;
+					}
+
+					jQuery(this).attr('title', 'Total = ' + data['total']);
+					if (data['total'] > 0) {
+						jQuery(this).attr('style', 'color: blue !important;');
 					} else {
 						jQuery(this).attr('style', 'color: red !important;');
 					}
@@ -120,30 +128,29 @@ jQuery(document).ready(function () {
 	}
 
 	function map_val(data = null, key = null) {
-		var result = data;
-		if ((data != null) && (key != null)) {
-			if (typeof key === 'object') {
-				var i;
-				for (i = 0; i < key.length; i++) {
-					var v = key[i];
-					if (result.hasOwnProperty(v)) {
-						var tmp = result[v];
-						result = tmp;
-					} else {
-						result = null;
-						break;
-					}
-				}
-			} else {
-				if (data.hasOwnProperty(key)) {
-					result = data[key];
-				} else {
-					result = null;
-				}
-			}
+		if (data == null) {
+			return null;
+		}
+		if (key == null) {
+			return data;
 		}
 
-		return result;
+		if (typeof key === 'object') {
+			var current = data;
+			for (var i = 0; i < key.length; i++) {
+				var v = key[i];
+				if (current == null || typeof current !== 'object' || !current.hasOwnProperty(v)) {
+					return null;
+				}
+				current = current[v];
+			}
+			return current;
+		} else {
+			if (!data.hasOwnProperty(key)) {
+				return null;
+			}
+			return data[key];
+		}
 	}
 
 	function romaji(str) {
